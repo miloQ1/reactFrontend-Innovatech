@@ -1,0 +1,106 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  animation: fadeIn 0.4s ease;
+  transition: border-color var(--transition-fast);
+}
+
+.item:hover {
+  border-color: var(--color-primary-light);
+}
+
+.icon {
+  width: 42px;
+  height: 42px;
+  background: var(--color-primary-subtle);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+}
+
+.projectName {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.acceptBtn,
+.rejectBtn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: var(--font-size-xs);
+  transition: all var(--transition-fast);
+}
+
+.acceptBtn {
+  background: var(--color-success);
+  color: white;
+}
+
+.acceptBtn:hover {
+  background: #047857;
+}
+
+.rejectBtn {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.rejectBtn:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.statusBadge {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 20px;
+}
+
+.pending {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.accepted {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.rejected {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
