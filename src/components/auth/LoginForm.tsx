@@ -8,35 +8,35 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    await onSubmit({ email, password });
+    await onSubmit({ identifier, password });
   };
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="login-email">
-          Email
+        <label className={styles.label} htmlFor="login-identifier">
+          Email o nombre de usuario
         </label>
         <input
-          id="login-email"
+          id="login-identifier"
           className={styles.input}
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="you@example.com o johndoe"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
           required
-          autoComplete="email"
+          autoComplete="username"
         />
       </div>
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="login-password">
-          Password
+          Contraseña
         </label>
         <input
           id="login-password"
@@ -51,7 +51,7 @@ export function LoginForm({ onSubmit, isLoading }: LoginFormProps) {
       </div>
 
       <button className={styles.submitBtn} type="submit" disabled={isLoading}>
-        {isLoading ? 'Signing in...' : 'Sign In'}
+        {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
       </button>
     </form>
   );
