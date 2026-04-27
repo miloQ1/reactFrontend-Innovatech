@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = '';
 
 //<T> es un comodin, puede ser cualquier cosa, comunmente ahi van listas o objetos
 async function request<T>(
