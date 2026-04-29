@@ -5,10 +5,13 @@ import { ProtectedRoute } from '../components/shared/ProtectedRoute';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { DashboardPage } from '../pages/DashboardPage';
-import { MyProjectsPage } from '../pages/MyProjectsPage';
+import { ClientsPage } from '../pages/ClientsPage';
+import { CreateClientPage } from '../pages/CreateClientPage';
+import { ClientDetailPage } from '../pages/ClientDetailPage';
 import { CreateProjectPage } from '../pages/CreateProjectPage';
 import { ProjectDetailPage } from '../pages/ProjectDetailPage';
-import { InvitationsPage } from '../pages/InvitationsPage';
+import { MyProjectsPage} from  '../pages/MyProjectsPage';
+
 
 export function AppRouter() {
   return (
@@ -29,10 +32,17 @@ export function AppRouter() {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/projects" element={<MyProjectsPage />} />
-          <Route path="/projects/create" element={<CreateProjectPage />} />
+
+          {/* Clients */}
+          <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/clients/create" element={<CreateClientPage />} />
+          <Route path="/clients/:id" element={<ClientDetailPage />} />
+
+          {/* Projects */}
+          <Route path="/clients/:clientId/projects/create" element={<CreateProjectPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
-          <Route path="/invitations" element={<InvitationsPage />} />
+          <Route path="/projects" element={<MyProjectsPage />} />
+
         </Route>
 
         {/* Default redirect */}

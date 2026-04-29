@@ -1,16 +1,26 @@
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
+import type { Project } from "../../types/projects";
+import { useState, useEffect } from "react";
+import { projectService } from "../../api/projectService";
 
-interface SidebarProps {
-  pendingInvitationsCount?: number;
-}
-
-export function Sidebar({ pendingInvitationsCount = 0 }: SidebarProps) {
+export function Sidebar() {
   const getLinkClass = ({ isActive }: { isActive: boolean }) =>
     `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`;
 
+
+  const [Projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    projectService.getAll()
+    .then(setProjects)
+    .catch(() => setProjects([]));
+  }, []); //el efecto se activa una vez
+
   return (
     <aside className={styles.sidebar}>
+
+      {/* General */}
       <span className={styles.sectionLabel}>General</span>
 
       <NavLink to="/dashboard" className={getLinkClass}>
@@ -18,26 +28,33 @@ export function Sidebar({ pendingInvitationsCount = 0 }: SidebarProps) {
         Dashboard
       </NavLink>
 
-      <span className={styles.sectionLabel}>Projects</span>
+      {/* Proyectos */}
+      <span className={styles.sectionLabel}>Proyectos</span>
+      
+      
+      {Projects.map((project)=> (
+        <NavLink
+        key={project.projectId} 
+        to={`/projects/${project.projectId}`} 
+        className={getLinkClass}
+        >
+        
+        <span className={styles.navIcon}>📋</span>
+        {project.name}
+      </NavLink>
+      ))}
+      
+      {/* Clientes */}
+      <span className={styles.sectionLabel}>Clientes</span>
 
-      <NavLink to="/projects" className={getLinkClass}>
-        <span className={styles.navIcon}>📁</span>
-        My Projects
+      <NavLink to="/clients" className={getLinkClass}>
+        <span className={styles.navIcon}>🏢</span>
+        Clientes
       </NavLink>
 
-      <NavLink to="/projects/create" className={getLinkClass}>
+      <NavLink to="/clients/create" className={getLinkClass}>
         <span className={styles.navIcon}>➕</span>
-        Create Project
-      </NavLink>
-
-      <span className={styles.sectionLabel}>Collaboration</span>
-
-      <NavLink to="/invitations" className={getLinkClass}>
-        <span className={styles.navIcon}>✉️</span>
-        Invitations
-        {pendingInvitationsCount > 0 && (
-          <span className={styles.badge}>{pendingInvitationsCount}</span>
-        )}
+        Nuevo cliente
       </NavLink>
     </aside>
   );

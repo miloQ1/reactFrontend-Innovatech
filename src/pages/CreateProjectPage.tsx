@@ -1,32 +1,50 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, type FormEvent } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { projectService, clientService } from '../api/projectService';
-import { CreateProjectForm } from '../components/projects/CreateProjectForm';
-import type { CreateProjectRequest } from '../types/projects';
-import type { Client } from '../types/projects';
+import type { CreateProjectRequest, ProjectStatus, Client } from '../types/projects';
 import styles from './CreateProjectPage.module.css';
 
+const STATUS_OPTIONS: ProjectStatus[] = [
+  'PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED'
+];
+
 export function CreateProjectPage() {
+  const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+
+  const [client, setClient] = useState<Client | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cargar clientes al montar
-  useEffect(() => {
-    clientService.getAll().then(setClients);
-  }, []);
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<ProjectStatus>('PLANNING');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  const handleCreate = async (data: CreateProjectRequest) => {
-    if (!selectedClientId) {
-      setError('Debes seleccionar un cliente');
-      return;
+  // Cargar info del cliente para mostrarla
+  useEffect(() => {
+    if (clientId) {
+      clientService.getById(Number(clientId)).then(setClient);
     }
+  }, [clientId]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!clientId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const project = await projectService.create(selectedClientId, data);
+      const data: CreateProjectRequest = {
+        code,
+        name,
+        description: description || undefined,
+        status,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      };
+      const project = await projectService.create(Number(clientId), data);
       navigate(`/projects/${project.projectId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear el proyecto');
@@ -37,31 +55,61 @@ export function CreateProjectPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Create New Project</h1>
+      <Link to={`/clients/${clientId}`} className={styles.backLink}>
+        ← Back to {client?.name ?? 'client'}
+      </Link>
 
-      {/* Selector de cliente */}
-      <div className={styles.field}>
-        <label className={styles.label}>Client</label>
-        <select
-          className={styles.select}
-          value={selectedClientId ?? ''}
-          onChange={(e) => setSelectedClientId(Number(e.target.value))}
-        >
-          <option value="">Select a client...</option>
-          {clients.map((c) => (
-            <option key={c.clientId} value={c.clientId}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <h1 className={styles.title}>New Project</h1>
+      {client && <p className={styles.subtitle}>For client: <strong>{client.name}</strong></p>}
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <CreateProjectForm
-        onSubmit={handleCreate}
-        isLoading={isLoading}
-      />
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.field}>
+          <label className={styles.label}>Code *</label>
+          <input className={styles.input} type="text" placeholder="e.g. PROJ-001"
+            value={code} onChange={(e) => setCode(e.target.value)} required />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Name *</label>
+          <input className={styles.input} type="text" placeholder="Project name"
+            value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Description</label>
+          <textarea className={styles.textarea} placeholder="Describe the project..."
+            value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label}>Status</label>
+          <select className={styles.input} value={status}
+            onChange={(e) => setStatus(e.target.value as ProjectStatus)}>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s.replace('_', ' ')}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.row}>
+          <div className={styles.field}>
+            <label className={styles.label}>Start Date</label>
+            <input className={styles.input} type="date"
+              value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>End Date</label>
+            <input className={styles.input} type="date"
+              value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </div>
+        </div>
+
+        <button className={styles.submitBtn} type="submit" disabled={isLoading}>
+          {isLoading ? 'Creating...' : 'Create Project'}
+        </button>
+      </form>
     </div>
   );
 }
