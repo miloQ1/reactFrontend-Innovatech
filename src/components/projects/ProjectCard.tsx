@@ -1,13 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import type { Project, MemberRole } from '../../types/project';
+import type { Project } from '../../types/projects';
 import styles from './ProjectCard.module.css';
 
 interface ProjectCardProps {
   project: Project;
-  userRole?: MemberRole;
 }
 
-export function ProjectCard({ project, userRole }: ProjectCardProps) {
+export function ProjectCard({ project }: ProjectCardProps) {
   const navigate = useNavigate();
 
   const formattedDate = new Date(project.createdAt).toLocaleDateString('en-US', {
@@ -17,23 +16,18 @@ export function ProjectCard({ project, userRole }: ProjectCardProps) {
   });
 
   return (
-    <div className={styles.card} onClick={() => navigate(`/projects/${project.id}`)}>
+    <div className={styles.card} onClick={() => navigate(`/projects/${project.projectId}`)}>
       <div className={styles.header}>
         <h3 className={styles.name}>{project.name}</h3>
-        {userRole && (
-          <span
-            className={`${styles.roleBadge} ${
-              userRole === 'MASTER' ? styles.master : styles.member
-            }`}
-          >
-            {userRole}
-          </span>
-        )}
+        <span className={`${styles.roleBadge} ${styles[project.status.toLowerCase()]}`}>
+          {project.status}
+        </span>
       </div>
 
       <p className={styles.description}>{project.description}</p>
 
       <div className={styles.meta}>
+        <span className={styles.metaItem}>🏢 {project.client.name}</span>
         <span className={styles.metaItem}>📅 {formattedDate}</span>
       </div>
     </div>

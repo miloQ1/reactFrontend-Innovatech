@@ -5,8 +5,24 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
+      '/api/auth': {
         target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+      '/api/clients': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/projects': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/phases': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
+      '/api/tasks': {
+        target: 'http://localhost:8081',
         changeOrigin: true,
       },
     },

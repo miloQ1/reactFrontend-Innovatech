@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { projectService } from '../api/projectService';
 import { ProjectList } from '../components/projects/ProjectList';
 import { EmptyState } from '../components/shared/EmptyState';
-import type { Project } from '../types/project';
+import type { Project } from '../types/projects'; 
 import styles from './MyProjectsPage.module.css';
 
 export function MyProjectsPage() {
@@ -14,13 +14,11 @@ export function MyProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      projectService
-        .getMyProjects(user.id)
-        .then(setProjects)
-        .finally(() => setIsLoading(false));
-    }
-  }, [user]);
+    projectService
+      .getAll()
+      .then(setProjects)
+      .finally(() => setIsLoading(false));
+  }, []); // ← sin depender de user, getAll() no necesita userId
 
   if (isLoading) {
     return <p>Loading projects...</p>;
@@ -44,7 +42,7 @@ export function MyProjectsPage() {
           onAction={() => navigate('/projects/create')}
         />
       ) : (
-        <ProjectList projects={projects} currentUserId={user?.id || ''} />
+        <ProjectList projects={projects} /> // ← sin currentUserId
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import type { ProjectMember } from '../../types/project';
+import type { ProjectMember } from '../../types/projects';
 import styles from './MemberList.module.css';
 
 interface MemberListProps {

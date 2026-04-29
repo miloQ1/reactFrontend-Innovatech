@@ -1,69 +1,102 @@
-// ===== Project Service (Mock Implementation) =====
-// Replace this implementation with real API calls when backend is ready.
+import type {
+  Client, Project, Phase, Task,
+  CreateClientRequest, CreateProjectRequest,
+  CreatePhaseRequest, CreateTaskRequest,
+  ProjectMember,
+  AddMemberRequest,
+} from '../types/projects';
+import { apiClient } from './apiClient';
 
-import type { Project, ProjectMember, CreateProjectRequest } from '../types/project';
-import { mockProjects, mockMembers } from '../mocks/projects';
+// ── Clients ──────────────────────────────────────────
+export const clientService = {
+  getAll(): Promise<Client[]> {
+    return apiClient.get<Client[]>('/api/clients');
+  },
+  getById(id: number): Promise<Client> {
+    return apiClient.get<Client>(`/api/clients/${id}`);
+  },
+  create(data: CreateClientRequest): Promise<Client> {
+    return apiClient.post<Client>('/api/clients', data);
+  },
+  update(id: number, data: Partial<CreateClientRequest>): Promise<Client> {
+    return apiClient.put<Client>(`/api/clients/${id}`, data);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/clients/${id}`);
+  },
+};
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Simulate mutable state
-const projects = [...mockProjects];
-const members = [...mockMembers];
-
+// ── Projects ──────────────────────────────────────────
 export const projectService = {
-  async getMyProjects(userId: string): Promise<Project[]> {
-    await delay(400);
-    // Projects where user is owner or member
-    const memberProjectIds = members
-      .filter((m) => m.userId === userId)
-      .map((m) => m.userId);
-    return projects.filter(
-      (p) => p.ownerId === userId || memberProjectIds.includes(p.ownerId)
-    );
+  getAll(): Promise<Project[]> {
+    return apiClient.get<Project[]>('/api/projects');
   },
-
-  async getProjectById(projectId: string): Promise<Project | undefined> {
-    await delay(300);
-    return projects.find((p) => p.id === projectId);
+  getById(id: number): Promise<Project> {
+    return apiClient.get<Project>(`/api/projects/${id}`);
   },
-
-  async createProject(data: CreateProjectRequest, userId: string, userName: string): Promise<Project> {
-    await delay(600);
-    const newProject: Project = {
-      id: `p${Date.now()}`,
-      name: data.name,
-      description: data.description,
-      createdAt: new Date().toISOString(),
-      ownerId: userId,
-    };
-    projects.push(newProject);
-
-    // Auto-add creator as MASTER
-    const newMember: ProjectMember = {
-      id: `m${Date.now()}`,
-      userId,
-      userName,
-      role: 'MASTER',
-      joinedAt: new Date().toISOString(),
-    };
-    members.push(newMember);
-
-    return newProject;
+  getByClient(clientId: number): Promise<Project[]> {
+    return apiClient.get<Project[]>(`/api/projects/client/${clientId}`);
   },
-
-  async getProjectMembers(projectId: string): Promise<ProjectMember[]> {
-    await delay(300);
-    const project = projects.find((p) => p.id === projectId);
-    if (!project) return [];
-    // Return members whose userId matches project members
-    // In mock, we associate members to the project by owner matching
-    return members.filter((m) => {
-      return projects.some((p) => p.id === projectId && (p.ownerId === m.userId || true));
-    });
+  create(clientId: number, data: CreateProjectRequest): Promise<Project> {
+    return apiClient.post<Project>(`/api/projects/client/${clientId}`, data);
   },
+  update(id: number, data: Partial<CreateProjectRequest>): Promise<Project> {
+    return apiClient.put<Project>(`/api/projects/${id}`, data);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/projects/${id}`);
+  },
+};
 
-  async getAllProjects(): Promise<Project[]> {
-    await delay(300);
-    return [...projects];
+// ── Phases ────────────────────────────────────────────
+export const phaseService = {
+  getByProject(projectId: number): Promise<Phase[]> {
+    return apiClient.get<Phase[]>(`/api/phases/project/${projectId}`);
+  },
+  getById(id: number): Promise<Phase> {
+    return apiClient.get<Phase>(`/api/phases/${id}`);
+  },
+  create(projectId: number, data: CreatePhaseRequest): Promise<Phase> {
+    return apiClient.post<Phase>(`/api/phases/project/${projectId}`, data);
+  },
+  update(id: number, data: Partial<CreatePhaseRequest>): Promise<Phase> {
+    return apiClient.put<Phase>(`/api/phases/${id}`, data);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/phases/${id}`);
+  },
+};
+
+// ── Tasks ─────────────────────────────────────────────
+export const taskService = {
+  getByProject(projectId: number): Promise<Task[]> {
+    return apiClient.get<Task[]>(`/api/tasks/project/${projectId}`);
+  },
+  getByPhase(phaseId: number): Promise<Task[]> {
+    return apiClient.get<Task[]>(`/api/tasks/phase/${phaseId}`);
+  },
+  getById(id: number): Promise<Task> {
+    return apiClient.get<Task>(`/api/tasks/${id}`);
+  },
+  create(projectId: number, data: CreateTaskRequest): Promise<Task> {
+    return apiClient.post<Task>(`/api/tasks/project/${projectId}`, data);
+  },
+  update(id: number, data: Partial<CreateTaskRequest>): Promise<Task> {
+    return apiClient.put<Task>(`/api/tasks/${id}`, data);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/tasks/${id}`);
+  },
+};
+
+export const memberService = {
+  getByProject(projectId: number): Promise<ProjectMember[]> {
+    return apiClient.get<ProjectMember[]>(`/api/projects/${projectId}/members`);
+  },
+  add(projectId: number, data: AddMemberRequest): Promise<ProjectMember> {
+    return apiClient.post<ProjectMember>(`/api/projects/${projectId}/members`, data);
+  },
+  remove(projectId: number, userId: string): Promise<void> {
+    return apiClient.delete<void>(`/api/projects/${projectId}/members/${userId}`);
   },
 };
