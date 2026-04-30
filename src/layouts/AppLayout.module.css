@@ -5,7 +5,7 @@
 .content {
   margin-left: var(--sidebar-width);
   margin-top: var(--navbar-height);
-  padding: var(--space-8);
+  padding: var(--space-5);
   min-height: calc(100vh - var(--navbar-height));
   animation: fadeIn 0.3s ease;
 }

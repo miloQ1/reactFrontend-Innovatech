@@ -1,14 +1,16 @@
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
-import type { Project } from "../../types/projects";
+import type { Client, Project } from "../../types/projects";
 import { useState, useEffect } from "react";
-import { projectService } from "../../api/projectService";
+import { clientService, projectService } from "../../api/projectService";
 
 export function Sidebar() {
   const getLinkClass = ({ isActive }: { isActive: boolean }) =>
     `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`;
 
 
+
+  // trae todos los proyectos en una lista
   const [Projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
@@ -16,6 +18,15 @@ export function Sidebar() {
     .then(setProjects)
     .catch(() => setProjects([]));
   }, []); //el efecto se activa una vez
+
+  // trae todos los clientes en una lista
+  const [Clients, setClients] = useState<Client[]>([]);
+
+  useEffect(() => {
+    clientService.getAll()
+    .then(setClients)
+    .catch(() => setClients([]));
+  }, []);
 
   return (
     <aside className={styles.sidebar}>
@@ -47,15 +58,19 @@ export function Sidebar() {
       {/* Clientes */}
       <span className={styles.sectionLabel}>Clientes</span>
 
-      <NavLink to="/clients" className={getLinkClass}>
+      {Clients.map((client) => (
+      <NavLink 
+      key={client.clientId}
+      to={`/clients/${client.clientId}`} 
+      className={getLinkClass}
+      >
         <span className={styles.navIcon}>🏢</span>
-        Clientes
+        {client.name}
       </NavLink>
 
-      <NavLink to="/clients/create" className={getLinkClass}>
-        <span className={styles.navIcon}>➕</span>
-        Nuevo cliente
-      </NavLink>
+      ))}
+
+  
     </aside>
   );
 }

@@ -1,6 +1,6 @@
 .page {
   animation: fadeIn 0.4s ease;
-  max-width: 960px;
+  max-width: 100%;
 }
 
 .header {

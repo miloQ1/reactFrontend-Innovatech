@@ -21,8 +21,8 @@ export function Navbar() {
         <button className= {styles.navBtn} onClick={() => navigate('/projects')}> 
           Mis Proyectos
         </button>
-        <button className= {styles.navBtn} onClick={() => navigate('')}> 
-          Boton 2
+        <button className= {styles.navBtn} onClick={() => navigate('/clients')}> 
+          Mis Clientes
         </button>
         <button className= {styles.navBtn} onClick={() => navigate('')}> 
           Boton 3
