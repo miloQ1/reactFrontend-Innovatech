@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { projectService, phaseService, taskService, memberService } from '../api/projectService';
-import type { Project, Phase, Task, ProjectMember, PhaseStatus, TaskStatus, TaskPriority } from '../types/project';
+import type { Project, Phase, Task, ProjectMember, PhaseStatus, TaskStatus, TaskPriority } from '../types/projects';
+import { KanbanBoard } from '../components/projects/KanbanBoard';
 import styles from './ProjectDetailPage.module.css';
 
 // ── Helpers de color ──────────────────────────────────
@@ -30,6 +31,7 @@ export function ProjectDetailPage() {
   const [members, setMembers]   = useState<ProjectMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'phases' | 'tasks' | 'members'>('phases');
+  const [taskPhaseId, setTaskPhaseId] = useState<number | null>(null);
 
   // Formulario fase
   const [showPhaseForm, setShowPhaseForm] = useState(false);
@@ -93,23 +95,26 @@ export function ProjectDetailPage() {
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    setTaskLoading(true);
-    try {
-      await taskService.create(Number(id), {
-        title: taskTitle,
-        description: taskDesc || undefined,
-        priority: taskPriority,
-        status: taskStatus,
-      });
-      setTaskTitle(''); setTaskDesc(''); setTaskPriority('MEDIUM'); setTaskStatus('TODO');
-      setShowTaskForm(false);
-      loadData();
-    } finally {
-      setTaskLoading(false);
-    }
-  };
+  e.preventDefault();
+  if (!id) return;
+  setTaskLoading(true);
+  try {
+    await taskService.create(Number(id), {
+      title: taskTitle,
+      description: taskDesc || undefined,
+      priority: taskPriority,
+      status: taskStatus,
+      phase: taskPhaseId ? { phaseId: taskPhaseId } : undefined,
+    });
+    setTaskTitle(''); setTaskDesc('');
+    setTaskPriority('MEDIUM'); setTaskStatus('TODO');
+    setTaskPhaseId(null);
+    setShowTaskForm(false);
+    loadData();
+  } finally {
+    setTaskLoading(false);
+  }
+};
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,124 +224,104 @@ export function ProjectDetailPage() {
 
       {/* ── Tab: Phases ── */}
       {activeTab === 'phases' && (
-        <div className={styles.tabContent}>
-          <div className={styles.tabHeader}>
-            <h2 className={styles.tabTitle}>Phases</h2>
-            <button className={styles.addBtn} onClick={() => setShowPhaseForm(v => !v)}>
-              {showPhaseForm ? 'Cancel' : '➕ Add Phase'}
-            </button>
-          </div>
+  <div className={styles.tabContent}>
+    <div className={styles.tabHeader}>
+      <h2 className={styles.tabTitle}>Phases & Tasks</h2>
+      <button className={styles.addBtn} onClick={() => setShowPhaseForm(v => !v)}>
+        {showPhaseForm ? 'Cancel' : '➕ Add Phase'}
+      </button>
+    </div>
 
-          {showPhaseForm && (
-            <form className={styles.inlineForm} onSubmit={handleAddPhase}>
-              <input className={styles.input} placeholder="Phase name" value={phaseName}
-                onChange={e => setPhaseName(e.target.value)} required />
-              <input className={styles.input} placeholder="Order (1, 2, 3...)" type="number"
-                value={phaseOrder} onChange={e => setPhaseOrder(e.target.value)} required />
-              <select className={styles.input} value={phaseStatus}
-                onChange={e => setPhaseStatus(e.target.value as PhaseStatus)}>
-                {['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].map(s => (
-                  <option key={s} value={s}>{s.replace('_',' ')}</option>
-                ))}
-              </select>
-              <button className={styles.submitBtn} type="submit" disabled={phaseLoading}>
-                {phaseLoading ? 'Saving...' : 'Save Phase'}
-              </button>
-            </form>
-          )}
+    {showPhaseForm && (
+      <form className={styles.inlineForm} onSubmit={handleAddPhase}>
+        <input className={styles.input} placeholder="Phase name" value={phaseName}
+          onChange={e => setPhaseName(e.target.value)} required />
+        <input className={styles.input} placeholder="Order (1, 2, 3...)" type="number"
+          value={phaseOrder} onChange={e => setPhaseOrder(e.target.value)} required />
+        <select className={styles.input} value={phaseStatus}
+          onChange={e => setPhaseStatus(e.target.value as PhaseStatus)}>
+          {['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].map(s => (
+            <option key={s} value={s}>{s.replace('_',' ')}</option>
+          ))}
+        </select>
+        <button className={styles.submitBtn} type="submit" disabled={phaseLoading}>
+          {phaseLoading ? 'Saving...' : 'Save Phase'}
+        </button>
+      </form>
+    )}
 
-          {phases.length === 0 ? (
-            <p className={styles.empty}>No phases yet. Add the first one.</p>
-          ) : (
-            <div className={styles.phaseList}>
-              {phases
-                .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-                .map((phase) => (
-                <div key={phase.phaseId} className={styles.phaseCard}>
-                  <div className={styles.phaseNumber}>{phase.sequenceOrder}</div>
-                  <div className={styles.phaseInfo}>
-                    <span className={styles.phaseName}>{phase.name}</span>
-                    {(phase.plannedStart || phase.plannedEnd) && (
-                      <span className={styles.phaseDates}>
-                        {phase.plannedStart} {phase.plannedEnd && `→ ${phase.plannedEnd}`}
-                      </span>
-                    )}
-                  </div>
-                  <span className={`${styles.badge} ${styles[`status_${statusColor(phase.status)}`]}`}>
-                    {phase.status.replace('_',' ')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+    {phases.length === 0 ? (
+      <p className={styles.empty}>No phases yet. Add the first one.</p>
+    ) : (
+      phases
+        .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+        .map(phase => (
+          <KanbanBoard
+            key={phase.phaseId}
+            phase={phase}
+            tasks={tasks.filter(t => t.phaseId === phase.phaseId)}
+            onTasksChange={loadData}
+          />
+        ))
+    )}
+
+    {/* Tareas sin fase asignada */}
+    {tasks.filter(t => t.phaseId === null).length > 0 && (
+      <KanbanBoard
+        key="unassigned"
+        phase={{ phaseId: 0, name: 'Unassigned', sequenceOrder: 0, status: 'PENDING' }}
+        tasks={tasks.filter(t => t.phaseId === null)}
+        onTasksChange={loadData}
+      />
+    )}
+  </div>
+)}
 
       {/* ── Tab: Tasks ── */}
       {activeTab === 'tasks' && (
-        <div className={styles.tabContent}>
-          <div className={styles.tabHeader}>
-            <h2 className={styles.tabTitle}>Tasks</h2>
-            <button className={styles.addBtn} onClick={() => setShowTaskForm(v => !v)}>
-              {showTaskForm ? 'Cancel' : '➕ Add Task'}
-            </button>
-          </div>
+  <div className={styles.tabContent}>
+    <div className={styles.tabHeader}>
+      <h2 className={styles.tabTitle}>Add Task</h2>
+    </div>
 
-          {showTaskForm && (
-            <form className={styles.inlineForm} onSubmit={handleAddTask}>
-              <input className={styles.input} placeholder="Task title" value={taskTitle}
-                onChange={e => setTaskTitle(e.target.value)} required />
-              <textarea className={styles.textarea} placeholder="Description (optional)"
-                value={taskDesc} onChange={e => setTaskDesc(e.target.value)} />
-              <div className={styles.formRow}>
-                <select className={styles.input} value={taskPriority}
-                  onChange={e => setTaskPriority(e.target.value as TaskPriority)}>
-                  {['LOW','MEDIUM','HIGH','CRITICAL'].map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-                <select className={styles.input} value={taskStatus}
-                  onChange={e => setTaskStatus(e.target.value as TaskStatus)}>
-                  {['TODO','IN_PROGRESS','IN_REVIEW','DONE','CANCELLED'].map(s => (
-                    <option key={s} value={s}>{s.replace('_',' ')}</option>
-                  ))}
-                </select>
-              </div>
-              <button className={styles.submitBtn} type="submit" disabled={taskLoading}>
-                {taskLoading ? 'Saving...' : 'Save Task'}
-              </button>
-            </form>
-          )}
+    <form className={styles.inlineForm} onSubmit={handleAddTask}>
+      <input className={styles.input} placeholder="Task title" value={taskTitle}
+        onChange={e => setTaskTitle(e.target.value)} required />
+      <textarea className={styles.textarea} placeholder="Description (optional)"
+        value={taskDesc} onChange={e => setTaskDesc(e.target.value)} />
 
-          {tasks.length === 0 ? (
-            <p className={styles.empty}>No tasks yet. Add the first one.</p>
-          ) : (
-            <div className={styles.taskList}>
-              {tasks.map((task) => (
-                <div key={task.taskId} className={styles.taskCard}>
-                  <div className={styles.taskLeft}>
-                    <span className={`${styles.priorityDot} ${styles[`priority_${priorityColor(task.priority)}`]}`} />
-                    <div>
-                      <span className={styles.taskTitle}>{task.title}</span>
-                      {task.description && (
-                        <p className={styles.taskDesc}>{task.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className={styles.taskRight}>
-                    <span className={`${styles.badge} ${styles[`status_${statusColor(task.status)}`]}`}>
-                      {task.status.replace(/_/g,' ')}
-                    </span>
-                    <span className={`${styles.priorityBadge} ${styles[`priority_${priorityColor(task.priority)}`]}`}>
-                      {task.priority}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Selector de fase */}
+      <select className={styles.input} value={taskPhaseId ?? ''}
+        onChange={e => setTaskPhaseId(e.target.value ? Number(e.target.value) : null)}>
+        <option value="">No phase (unassigned)</option>
+        {phases.sort((a,b) => a.sequenceOrder - b.sequenceOrder).map(p => (
+          <option key={p.phaseId} value={p.phaseId}>
+            #{p.sequenceOrder} {p.name}
+          </option>
+        ))}
+      </select>
+
+      <div className={styles.formRow}>
+        <select className={styles.input} value={taskPriority}
+          onChange={e => setTaskPriority(e.target.value as TaskPriority)}>
+          {['LOW','MEDIUM','HIGH','CRITICAL'].map(p => (
+            <option key={p} value={p}>{p}</option>
+          ))}
+        </select>
+        <select className={styles.input} value={taskStatus}
+          onChange={e => setTaskStatus(e.target.value as TaskStatus)}>
+          {['TODO','IN_PROGRESS','IN_REVIEW','DONE','CANCELLED'].map(s => (
+            <option key={s} value={s}>{s.replace('_',' ')}</option>
+          ))}
+        </select>
+      </div>
+
+      <button className={styles.submitBtn} type="submit" disabled={taskLoading}>
+        {taskLoading ? 'Saving...' : 'Add Task'}
+      </button>
+    </form>
+  </div>
+)}
 
       {/* ── Tab: Members ── */}
       {activeTab === 'members' && (

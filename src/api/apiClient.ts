@@ -31,17 +31,21 @@ async function request<T>(
 }
 
 export const apiClient = {
-  get: <T>(path: string, withAuth = false) =>
-    request<T>(path, { method: 'GET' }, withAuth),
-
-  post: <T>(path: string, body: unknown, withAuth = false) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }, withAuth),
-
-  put: <T>(path: string, body: unknown, withAuth = false) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }, withAuth),
-
-  delete: <T>(path: string, withAuth = false) =>
-    request<T>(path, { method: 'DELETE' }, withAuth),
+  get<T>(path: string, withAuth = false) {
+    return request<T>(path, { method: 'GET' }, withAuth);
+  },
+  post<T>(path: string, body: unknown, withAuth = false) {
+    return request<T>(path, { method: 'POST', body: JSON.stringify(body) }, withAuth);
+  },
+  put<T>(path: string, body: unknown, withAuth = false) {
+    return request<T>(path, { method: 'PUT', body: JSON.stringify(body) }, withAuth);
+  },
+  patch<T>(path: string, body: unknown, withAuth = false) {
+    return request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }, withAuth);
+  },
+  delete<T>(path: string, withAuth = false) {
+    return request<T>(path, { method: 'DELETE' }, withAuth);
+  },
 };
 
 

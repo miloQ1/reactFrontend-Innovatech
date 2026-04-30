@@ -4,6 +4,7 @@ import type {
   CreatePhaseRequest, CreateTaskRequest,
   ProjectMember,
   AddMemberRequest,
+  TaskStatus,
 } from '../types/projects';
 import { apiClient } from './apiClient';
 
@@ -86,6 +87,9 @@ export const taskService = {
   },
   delete(id: number): Promise<void> {
     return apiClient.delete<void>(`/api/tasks/${id}`);
+  },
+  updateStatus(id: number, status: TaskStatus): Promise<Task> {
+  return apiClient.patch<Task>(`/api/tasks/${id}/status`, { status });
   },
 };
 

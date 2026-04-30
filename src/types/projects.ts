@@ -89,6 +89,7 @@ export interface CreateTaskRequest {
   estimatedHours?: number;
   startDate?: string;
   dueDate?: string;
+  phase?: { phaseId: number };
 }
 
 export interface ProjectMember {
@@ -102,3 +103,18 @@ export interface AddMemberRequest {
   userId: string;
   userName: string;
 }
+
+export interface Task {
+  taskId: number;
+  phaseId: number | null;  // ← agregar esto
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assignedResourceId?: number;
+  estimatedHours?: number;
+  actualHours?: number;
+  startDate?: string;
+  dueDate?: string;
+}
+
