@@ -9,6 +9,10 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/api/users': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/api/clients': {
         target: 'http://localhost:8081',
         changeOrigin: true,
@@ -25,6 +29,7 @@ export default defineConfig({
         target: 'http://localhost:8081',
         changeOrigin: true,
       },
+      
     },
   },
 })

@@ -1,58 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { projectService, phaseService, taskService, memberService } from '../api/projectService';
-import type { Project, Phase, Task, ProjectMember, PhaseStatus, TaskStatus, TaskPriority } from '../types/projects';
-import { KanbanBoard } from '../components/projects/KanbanBoard';
+import type { Project, Phase, Task, ProjectMember } from '../types/projects';
+import { OverviewTab } from '../components/projects/tabs/OverviewTab';
+import { PhasesTab }   from '../components/projects/tabs/PhasesTab';
+import { MembersTab }  from '../components/projects/tabs/MembersTab';
+import { PhaseBoard }  from '../components/projects/PhaseBoard';
+import { ConfirmModal } from '../components/shared/ConfirmModal';
 import styles from './ProjectDetailPage.module.css';
 
-// ── Helpers de color ──────────────────────────────────
 function statusColor(status: string) {
   const map: Record<string, string> = {
     PLANNING: 'blue', IN_PROGRESS: 'indigo', ON_HOLD: 'warning',
-    COMPLETED: 'success', CANCELLED: 'danger',
-    PENDING: 'blue', DONE: 'success',
+    COMPLETED: 'success', CANCELLED: 'danger', PENDING: 'blue', DONE: 'success',
   };
   return map[status] ?? 'muted';
-}
-
-function priorityColor(priority: TaskPriority) {
-  const map: Record<string, string> = {
-    LOW: 'success', MEDIUM: 'warning', HIGH: 'danger', CRITICAL: 'critical',
-  };
-  return map[priority] ?? 'muted';
 }
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const [project, setProject]   = useState<Project | null>(null);
-  const [phases, setPhases]     = useState<Phase[]>([]);
-  const [tasks, setTasks]       = useState<Task[]>([]);
-  const [members, setMembers]   = useState<ProjectMember[]>([]);
+  const [project, setProject]     = useState<Project | null>(null);
+  const [phases, setPhases]       = useState<Phase[]>([]);
+  const [tasks, setTasks]         = useState<Task[]>([]);
+  const [members, setMembers]     = useState<ProjectMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'phases' | 'tasks' | 'members'>('phases');
-  const [taskPhaseId, setTaskPhaseId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('overview');
 
-  // Formulario fase
+  // Form nueva fase
   const [showPhaseForm, setShowPhaseForm] = useState(false);
   const [phaseName, setPhaseName]         = useState('');
-  const [phaseOrder, setPhaseOrder]       = useState('');
-  const [phaseStatus, setPhaseStatus]     = useState<PhaseStatus>('PENDING');
+  const [phaseStart, setPhaseStart]       = useState('');
+  const [phaseEnd, setPhaseEnd]           = useState('');
   const [phaseLoading, setPhaseLoading]   = useState(false);
 
-  // Formulario tarea
-  const [showTaskForm, setShowTaskForm]   = useState(false);
-  const [taskTitle, setTaskTitle]         = useState('');
-  const [taskDesc, setTaskDesc]           = useState('');
-  const [taskPriority, setTaskPriority]   = useState<TaskPriority>('MEDIUM');
-  const [taskStatus, setTaskStatus]       = useState<TaskStatus>('TODO');
-  const [taskLoading, setTaskLoading]     = useState(false);
-
-  // Formulario miembro
-  const [newUserId, setNewUserId]         = useState('');
-  const [newUserName, setNewUserName]     = useState('');
-  const [memberError, setMemberError]     = useState<string | null>(null);
-  const [memberLoading, setMemberLoading] = useState(false);
+  // Confirm modal (para eliminar fase desde topbar si se quiere)
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string; message: string; onConfirm: () => void;
+  } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
@@ -65,7 +50,7 @@ export function ProjectDetailPage() {
         memberService.getByProject(projectId),
       ]);
       setProject(proj);
-      setPhases(phs);
+      setPhases(phs.sort((a, b) => a.sequenceOrder - b.sequenceOrder));
       setTasks(tsks);
       setMembers(mems);
     } finally {
@@ -75,292 +60,166 @@ export function ProjectDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Handlers ─────────────────────────────────────────
   const handleAddPhase = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
     setPhaseLoading(true);
     try {
-      await phaseService.create(Number(id), {
+      const newPhase = await phaseService.create(Number(id), {
         name: phaseName,
-        sequenceOrder: Number(phaseOrder),
-        status: phaseStatus,
+        sequenceOrder: phases.length + 1,
+        plannedStart: phaseStart || undefined,
+        plannedEnd: phaseEnd || undefined,
       });
-      setPhaseName(''); setPhaseOrder(''); setPhaseStatus('PENDING');
+      setPhaseName(''); setPhaseStart(''); setPhaseEnd('');
       setShowPhaseForm(false);
-      loadData();
+      await loadData();
+      setActiveTab(String(newPhase.phaseId));
     } finally {
       setPhaseLoading(false);
     }
   };
 
-  const handleAddTask = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!id) return;
-  setTaskLoading(true);
-  try {
-    await taskService.create(Number(id), {
-      title: taskTitle,
-      description: taskDesc || undefined,
-      priority: taskPriority,
-      status: taskStatus,
-      phase: taskPhaseId ? { phaseId: taskPhaseId } : undefined,
-    });
-    setTaskTitle(''); setTaskDesc('');
-    setTaskPriority('MEDIUM'); setTaskStatus('TODO');
-    setTaskPhaseId(null);
-    setShowTaskForm(false);
-    loadData();
-  } finally {
-    setTaskLoading(false);
-  }
-};
-
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    setMemberLoading(true);
-    setMemberError(null);
-    try {
-      await memberService.add(Number(id), { userId: newUserId, userName: newUserName });
-      setNewUserId(''); setNewUserName('');
-      loadData();
-    } catch (err) {
-      setMemberError(err instanceof Error ? err.message : 'Error al agregar miembro');
-    } finally {
-      setMemberLoading(false);
-    }
-  };
-
-  const handleRemoveMember = async (userId: string) => {
-    if (!id) return;
-    await memberService.remove(Number(id), userId).catch(() => {});
-    loadData();
-  };
-
-  // ── Render ────────────────────────────────────────────
-  if (isLoading) return <div className={styles.loading}>Loading project...</div>;
+  if (isLoading) return <div className={styles.loading}>Loading...</div>;
 
   if (!project) {
     return (
       <div className={styles.notFound}>
-        <h2 className={styles.notFoundTitle}>Project not found</h2>
         <Link to="/clients" className={styles.backLink}>← Back to clients</Link>
+        <h2>Project not found</h2>
       </div>
     );
   }
 
-  const formattedDate = new Date(project.createdAt).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
+  const activePhase = phases.find(p => String(p.phaseId) === activeTab);
+  const phaseTasks  = activePhase ? tasks.filter(t => t.phaseId === activePhase.phaseId) : [];
 
   return (
     <div className={styles.page}>
-      <Link to={`/clients/${project.client.clientId}`} className={styles.backLink}>
-        ← {project.client.name}
-      </Link>
 
-      {/* Header */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <div className={styles.titleRow}>
-            <h1 className={styles.projectName}>{project.name}</h1>
-            <span className={`${styles.statusBadge} ${styles[`status_${statusColor(project.status)}`]}`}>
-              {project.status.replace(/_/g, ' ')}
-            </span>
-          </div>
-          <span className={styles.code}>#{project.code}</span>
-          {project.description && (
-            <p className={styles.description}>{project.description}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Meta pills */}
-      <div className={styles.metaRow}>
-        <span className={styles.metaPill}>🏢 {project.client.name}</span>
-        <span className={styles.metaPill}>📅 {formattedDate}</span>
-        {project.startDate && <span className={styles.metaPill}>🚀 {project.startDate}</span>}
-        {project.endDate && <span className={styles.metaPill}>🏁 {project.endDate}</span>}
-        {project.budget && <span className={styles.metaPill}>💰 ${project.budget.toLocaleString()}</span>}
-      </div>
-
-      {/* Stat cards */}
-      <div className={styles.statsRow}>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{phases.length}</span>
-          <span className={styles.statLabel}>Phases</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{tasks.length}</span>
-          <span className={styles.statLabel}>Tasks</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>
-            {tasks.filter(t => t.status === 'DONE').length}
+      {/* ── Top bar ── */}
+      <div className={styles.topBar}>
+        <Link to={`/clients/${project.client.clientId}`} className={styles.backLink}>
+          ← {project.client.name}
+        </Link>
+        <div className={styles.topBarCenter}>
+          <span className={styles.topBarName}>{project.name}</span>
+          <span className={styles.topBarCode}>#{project.code}</span>
+          <span className={`${styles.topBarBadge} ${styles[`status_${statusColor(project.status)}`]}`}>
+            {project.status.replace(/_/g, ' ')}
           </span>
-          <span className={styles.statLabel}>Done</span>
         </div>
-        <div className={styles.statCard}>
-          <span className={styles.statValue}>{members.length}</span>
-          <span className={styles.statLabel}>Members</span>
+        <div className={styles.topBarRight}>
+          <span className={styles.topBarMeta}>{tasks.length} tasks</span>
+          <span className={styles.topBarMeta}>{tasks.filter(t => t.status === 'DONE').length} done</span>
+          <span className={styles.topBarMeta}>{members.length} members</span>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        {(['phases', 'tasks', 'members'] as const).map((tab) => (
+      {/* ── Tab bar ── */}
+      <div className={styles.tabBar}>
+        <button
+          className={`${styles.tab} ${activeTab === 'overview' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >🗂 Resumen</button>
+
+        <button
+          className={`${styles.tab} ${activeTab === 'phases' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('phases')}
+        >📋 Fases ({phases.length})</button>
+
+        {phases.map(phase => (
           <button
-            key={tab}
-            className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab(tab)}
+            key={phase.phaseId}
+            className={`${styles.tab} ${activeTab === String(phase.phaseId) ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab(String(phase.phaseId))}
           >
-            {tab === 'phases' && `📋 Phases (${phases.length})`}
-            {tab === 'tasks' && `✅ Tasks (${tasks.length})`}
-            {tab === 'members' && `👥 Members (${members.length})`}
+            <span className={`${styles.phaseDot} ${styles[`status_${statusColor(phase.computedStatus ?? phase.status)}`]}`} />
+            {phase.name}
           </button>
         ))}
+
+        <button
+          className={`${styles.tab} ${activeTab === 'members' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('members')}
+        >👥 Miembros ({members.length})</button>
+
+        {!showPhaseForm && (
+          <button className={styles.addPhaseBtn} onClick={() => setShowPhaseForm(true)}>
+            ＋ Add Phase
+          </button>
+        )}
       </div>
 
-      {/* ── Tab: Phases ── */}
-      {activeTab === 'phases' && (
-  <div className={styles.tabContent}>
-    <div className={styles.tabHeader}>
-      <h2 className={styles.tabTitle}>Phases & Tasks</h2>
-      <button className={styles.addBtn} onClick={() => setShowPhaseForm(v => !v)}>
-        {showPhaseForm ? 'Cancel' : '➕ Add Phase'}
-      </button>
-    </div>
-
-    {showPhaseForm && (
-      <form className={styles.inlineForm} onSubmit={handleAddPhase}>
-        <input className={styles.input} placeholder="Phase name" value={phaseName}
-          onChange={e => setPhaseName(e.target.value)} required />
-        <input className={styles.input} placeholder="Order (1, 2, 3...)" type="number"
-          value={phaseOrder} onChange={e => setPhaseOrder(e.target.value)} required />
-        <select className={styles.input} value={phaseStatus}
-          onChange={e => setPhaseStatus(e.target.value as PhaseStatus)}>
-          {['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].map(s => (
-            <option key={s} value={s}>{s.replace('_',' ')}</option>
-          ))}
-        </select>
-        <button className={styles.submitBtn} type="submit" disabled={phaseLoading}>
-          {phaseLoading ? 'Saving...' : 'Save Phase'}
-        </button>
-      </form>
-    )}
-
-    {phases.length === 0 ? (
-      <p className={styles.empty}>No phases yet. Add the first one.</p>
-    ) : (
-      phases
-        .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-        .map(phase => (
-          <KanbanBoard
-            key={phase.phaseId}
-            phase={phase}
-            tasks={tasks.filter(t => t.phaseId === phase.phaseId)}
-            onTasksChange={loadData}
-          />
-        ))
-    )}
-
-    {/* Tareas sin fase asignada */}
-    {tasks.filter(t => t.phaseId === null).length > 0 && (
-      <KanbanBoard
-        key="unassigned"
-        phase={{ phaseId: 0, name: 'Unassigned', sequenceOrder: 0, status: 'PENDING' }}
-        tasks={tasks.filter(t => t.phaseId === null)}
-        onTasksChange={loadData}
-      />
-    )}
-  </div>
-)}
-
-      {/* ── Tab: Tasks ── */}
-      {activeTab === 'tasks' && (
-  <div className={styles.tabContent}>
-    <div className={styles.tabHeader}>
-      <h2 className={styles.tabTitle}>Add Task</h2>
-    </div>
-
-    <form className={styles.inlineForm} onSubmit={handleAddTask}>
-      <input className={styles.input} placeholder="Task title" value={taskTitle}
-        onChange={e => setTaskTitle(e.target.value)} required />
-      <textarea className={styles.textarea} placeholder="Description (optional)"
-        value={taskDesc} onChange={e => setTaskDesc(e.target.value)} />
-
-      {/* Selector de fase */}
-      <select className={styles.input} value={taskPhaseId ?? ''}
-        onChange={e => setTaskPhaseId(e.target.value ? Number(e.target.value) : null)}>
-        <option value="">No phase (unassigned)</option>
-        {phases.sort((a,b) => a.sequenceOrder - b.sequenceOrder).map(p => (
-          <option key={p.phaseId} value={p.phaseId}>
-            #{p.sequenceOrder} {p.name}
-          </option>
-        ))}
-      </select>
-
-      <div className={styles.formRow}>
-        <select className={styles.input} value={taskPriority}
-          onChange={e => setTaskPriority(e.target.value as TaskPriority)}>
-          {['LOW','MEDIUM','HIGH','CRITICAL'].map(p => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-        <select className={styles.input} value={taskStatus}
-          onChange={e => setTaskStatus(e.target.value as TaskStatus)}>
-          {['TODO','IN_PROGRESS','IN_REVIEW','DONE','CANCELLED'].map(s => (
-            <option key={s} value={s}>{s.replace('_',' ')}</option>
-          ))}
-        </select>
-      </div>
-
-      <button className={styles.submitBtn} type="submit" disabled={taskLoading}>
-        {taskLoading ? 'Saving...' : 'Add Task'}
-      </button>
-    </form>
-  </div>
-)}
-
-      {/* ── Tab: Members ── */}
-      {activeTab === 'members' && (
-        <div className={styles.tabContent}>
-          <div className={styles.tabHeader}>
-            <h2 className={styles.tabTitle}>Members</h2>
-          </div>
-
-          {members.length === 0 ? (
-            <p className={styles.empty}>No members yet.</p>
-          ) : (
-            <div className={styles.memberList}>
-              {members.map((m) => (
-                <div key={m.id} className={styles.memberCard}>
-                  <div className={styles.memberAvatar}>
-                    {m.userName.charAt(0).toUpperCase()}
-                  </div>
-                  <span className={styles.memberName}>@{m.userName}</span>
-                  <button className={styles.removeBtn} onClick={() => handleRemoveMember(m.userId)}>
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <form className={styles.inlineForm} onSubmit={handleAddMember}>
-            <h3 className={styles.formSubtitle}>Add Member</h3>
-            {memberError && <p className={styles.errorMsg}>{memberError}</p>}
-            <input className={styles.input} placeholder="User ID (USR-...)"
-              value={newUserId} onChange={e => setNewUserId(e.target.value)} required />
-            <input className={styles.input} placeholder="Username"
-              value={newUserName} onChange={e => setNewUserName(e.target.value)} required />
-            <button className={styles.submitBtn} type="submit" disabled={memberLoading}>
-              {memberLoading ? 'Adding...' : 'Add Member'}
-            </button>
-          </form>
-        </div>
+      {/* ── Form nueva fase ── */}
+      {showPhaseForm && (
+        <form className={styles.phaseForm} onSubmit={handleAddPhase}>
+          <input className={styles.phaseInput} placeholder="Phase name *"
+            value={phaseName} onChange={e => setPhaseName(e.target.value)} autoFocus required />
+          <input className={styles.phaseInput} type="date"
+            value={phaseStart} onChange={e => setPhaseStart(e.target.value)} />
+          <input className={styles.phaseInput} type="date"
+            value={phaseEnd} onChange={e => setPhaseEnd(e.target.value)} />
+          <button className={styles.phaseSaveBtn} type="submit" disabled={phaseLoading}>
+            {phaseLoading ? 'Saving...' : 'Save'}
+          </button>
+          <button type="button" className={styles.phaseCancelBtn}
+            onClick={() => { setShowPhaseForm(false); setPhaseName(''); }}>
+            Cancel
+          </button>
+        </form>
       )}
+
+      {/* ── Tab content ── */}
+      <div className={styles.tabContent}>
+        {activeTab === 'overview' && (
+          <OverviewTab
+            project={project}
+            phases={phases}
+            tasks={tasks}
+            onTabChange={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'phases' && (
+          <PhasesTab
+            phases={phases}
+            tasks={tasks}
+            projectId={Number(id)}
+            onReload={loadData}
+            onTabChange={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'members' && (
+          <MembersTab
+            members={members}
+            projectId={Number(id)}
+            onReload={loadData}
+          />
+        )}
+
+        {activePhase && (
+          <PhaseBoard
+            phase={activePhase}
+            tasks={phaseTasks}
+            onTasksChange={loadData}
+            projectId={Number(id)}
+          />
+        )}
+      </div>
+
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel="Eliminar"
+          danger
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
     </div>
   );
 }

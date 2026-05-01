@@ -17,4 +17,8 @@ export const authService = {
   logout(refreshToken: string): Promise<void> {
     return apiClient.post<void>('/api/auth/logout', { refreshToken });
   },
+  
+  getUserByUsername(userName: string): Promise<User> {
+  return apiClient.get<User>(`/api/users/username/${userName}`);
+},
 };

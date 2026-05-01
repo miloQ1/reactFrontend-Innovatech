@@ -35,19 +35,29 @@ export interface Phase {
   sequenceOrder: number;
   plannedStart?: string;
   plannedEnd?: string;
-  status: PhaseStatus;
+  status: string;         // viene del backend como computedStatus
+  computedStatus?: string;
 }
 
 export interface Task {
   taskId: number;
+  taskCode?: string; 
+  phaseId: number | null;
   title: string;
   description?: string;
-  priority: TaskPriority;
+  priority: TaskPriority | null;
   status: TaskStatus;
   assignedResourceId?: number;
   estimatedHours?: number;
   actualHours?: number;
   startDate?: string;
+  dueDate?: string;
+}
+export interface UpdateTaskRequest {
+  title?: string;
+  description?: string;
+  priority?: TaskPriority | null;
+  status?: TaskStatus;
   dueDate?: string;
 }
 
@@ -77,7 +87,6 @@ export interface CreatePhaseRequest {
   sequenceOrder: number;
   plannedStart?: string;
   plannedEnd?: string;
-  status: PhaseStatus;
 }
 
 export interface CreateTaskRequest {
@@ -106,10 +115,10 @@ export interface AddMemberRequest {
 
 export interface Task {
   taskId: number;
-  phaseId: number | null;  // ← agregar esto
+  phaseId: number | null; 
   title: string;
   description?: string;
-  priority: TaskPriority;
+  priority: TaskPriority | null;
   status: TaskStatus;
   assignedResourceId?: number;
   estimatedHours?: number;
@@ -118,3 +127,28 @@ export interface Task {
   dueDate?: string;
 }
 
+export interface BoardColumn {
+  columnId: number;
+  name: string;
+  color: string;
+  sequenceOrder: number;
+  mappedStatus: string | null;
+}
+
+export interface CreateColumnRequest {
+  name: string;
+  color: string;
+  mappedStatus?: string;
+}
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  phaseId?: number; // ← campo directo
+  assignedResourceId?: number;
+  estimatedHours?: number;
+  startDate?: string;
+  dueDate?: string;
+}

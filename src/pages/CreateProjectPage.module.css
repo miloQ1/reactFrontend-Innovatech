@@ -18,12 +18,28 @@
   margin-bottom: 0.25rem;
 }
 
+
+.autoLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  font-weight: 400;
+  margin-left: var(--space-2);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .subtitle {
   color: var(--color-text-secondary, #888);
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
 }
 
+.inputReadonly {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  border-style: dashed;
+}
 .form {
   display: flex;
   flex-direction: column;

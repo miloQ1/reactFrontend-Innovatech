@@ -4,9 +4,11 @@ import type {
   CreatePhaseRequest, CreateTaskRequest,
   ProjectMember,
   AddMemberRequest,
-  TaskStatus,
+  TaskStatus,BoardColumn, CreateColumnRequest,
+  UpdateTaskRequest
 } from '../types/projects';
 import { apiClient } from './apiClient';
+
 
 // ── Clients ──────────────────────────────────────────
 export const clientService = {
@@ -61,8 +63,8 @@ export const phaseService = {
     return apiClient.post<Phase>(`/api/phases/project/${projectId}`, data);
   },
   update(id: number, data: Partial<CreatePhaseRequest>): Promise<Phase> {
-    return apiClient.put<Phase>(`/api/phases/${id}`, data);
-  },
+  return apiClient.patch<Phase>(`/api/phases/${id}`, data); // ← PATCH en vez de PUT
+},
   delete(id: number): Promise<void> {
     return apiClient.delete<void>(`/api/phases/${id}`);
   },
@@ -85,9 +87,14 @@ export const taskService = {
   update(id: number, data: Partial<CreateTaskRequest>): Promise<Task> {
     return apiClient.put<Task>(`/api/tasks/${id}`, data);
   },
-  delete(id: number): Promise<void> {
+  updateTask(id: number, data: UpdateTaskRequest): Promise<Task> {
+  return apiClient.put<Task>(`/api/tasks/${id}`, data);
+  },
+
+  deleteTask(id: number): Promise<void> {
     return apiClient.delete<void>(`/api/tasks/${id}`);
   },
+  
   updateStatus(id: number, status: TaskStatus): Promise<Task> {
   return apiClient.patch<Task>(`/api/tasks/${id}/status`, { status });
   },
@@ -102,5 +109,23 @@ export const memberService = {
   },
   remove(projectId: number, userId: string): Promise<void> {
     return apiClient.delete<void>(`/api/projects/${projectId}/members/${userId}`);
+  },
+};
+
+export const columnService = {
+  getByPhase(phaseId: number): Promise<BoardColumn[]> {
+    return apiClient.get<BoardColumn[]>(`/api/phases/${phaseId}/columns`);
+  },
+  create(phaseId: number, data: CreateColumnRequest): Promise<BoardColumn> {
+    return apiClient.post<BoardColumn>(`/api/phases/${phaseId}/columns`, data);
+  },
+  createDefaults(phaseId: number): Promise<void> {
+    return apiClient.post<void>(`/api/phases/${phaseId}/columns/defaults`, {});
+  },
+  update(phaseId: number, columnId: number, data: Partial<CreateColumnRequest>): Promise<BoardColumn> {
+    return apiClient.patch<BoardColumn>(`/api/phases/${phaseId}/columns/${columnId}`, data);
+  },
+  delete(phaseId: number, columnId: number): Promise<void> {
+    return apiClient.delete<void>(`/api/phases/${phaseId}/columns/${columnId}`);
   },
 };
