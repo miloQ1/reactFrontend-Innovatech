@@ -22,10 +22,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       authService
         .me()
-        .then((u) => setUser(u))
+        .then((u) => {
+          setUser(u);
+          localStorage.setItem('userId', u.id); // ← restaurar userId al recargar
+        })
         .catch(() => {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userId');
         })
         .finally(() => setIsLoading(false));
     } else {
@@ -37,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await authService.login(data);
     localStorage.setItem('accessToken', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);
+    localStorage.setItem('userId', response.user.id); // ← agregar
     setUser(response.user);
   }, []);
 
@@ -44,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await authService.register(data);
     localStorage.setItem('accessToken', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);
+    localStorage.setItem('userId', response.user.id); // ← agregar
     setUser(response.user);
   }, []);
 
@@ -54,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userId'); // ← agregar
     setUser(null);
   }, []);
 
