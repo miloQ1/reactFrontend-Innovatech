@@ -7,6 +7,7 @@ import { PhasesTab }   from '../components/projects/tabs/PhasesTab';
 import { MembersTab }  from '../components/projects/tabs/MembersTab';
 import { PhaseBoard }  from '../components/projects/PhaseBoard';
 import { ConfirmModal } from '../components/shared/ConfirmModal';
+import { apiClient } from "../api/apiClient";
 import styles from './ProjectDetailPage.module.css';
 
 function statusColor(status: string) {
@@ -74,15 +75,15 @@ export function ProjectDetailPage() {
   }, [showStatusMenu]);
 
   const handleStatusChange = async (newStatus: string) => {
-    setUpdatingStatus(true);
-    setShowStatusMenu(false);
-    try {
-      await projectService.update(Number(id), { status: newStatus as any });
-      loadData();
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
+  setUpdatingStatus(true);
+  setShowStatusMenu(false);
+  try {
+    await apiClient.patch(`/api/projects/${id}/status`, { status: newStatus }, true);
+    loadData();
+  } finally {
+    setUpdatingStatus(false);
+  }
+};
 
   const handleAddPhase = async (e: React.FormEvent) => {
     e.preventDefault();
