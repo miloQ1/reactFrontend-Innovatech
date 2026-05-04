@@ -4,6 +4,7 @@ import { memberService } from '../../../api/projectService';
 import { authService } from '../../../api/authService';
 import { ConfirmModal } from '../../shared/ConfirmModal';
 import styles from './Tabs.module.css';
+import { useAuth } from '../../../hooks/useAuth';
 
 interface MembersTabProps {
   members: ProjectMember[];
@@ -19,6 +20,8 @@ export function MembersTab({ members, projectId, onReload }: MembersTabProps) {
   const [confirmModal, setConfirmModal] = useState<{
     title: string; message: string; onConfirm: () => void;
   } | null>(null);
+
+  const { user } = useAuth();
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,24 +59,29 @@ export function MembersTab({ members, projectId, onReload }: MembersTabProps) {
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>👥 Members</h2>
 
-        {members.length === 0 ? (
-          <p className={styles.empty}>No members yet.</p>
-        ) : (
-          <div className={styles.memberList}>
-            {members.map(m => (
-              <div key={m.id} className={styles.memberCard}>
-                <div className={styles.memberAvatar}>{m.userName.charAt(0).toUpperCase()}</div>
-                <div className={styles.memberInfo}>
-                  <span className={styles.memberName}>@{m.userName}</span>
-                  <span className={styles.memberId}>{m.userId}</span>
-                </div>
-                <button className={styles.removeBtn} onClick={() => handleRemove(m)}>
-                  Remove
-                </button>
-              </div>
-            ))}
+        {members.map(m => (
+        <div key={m.id} className={styles.memberCard}>
+          <div className={styles.memberAvatar}>{m.userName.charAt(0).toUpperCase()}</div>
+          <div className={styles.memberInfo}>
+            {user?.userName === m.userName ? (
+              <span className={styles.memberName}>
+                {user.firstName} {user.lastName}
+              </span>
+            ) : (
+              <span className={styles.memberName}>@{m.userName}</span>
+            )}
+            <span className={styles.memberId}>@{m.userName}</span>
           </div>
-        )}
+          <span className={`${styles.memberRole} ${m.role === 'OWNER' ? styles.memberRoleOwner : ''}`}>
+            {m.role === 'OWNER' ? '👑 Owner' : '👤 Miembro'}
+          </span>
+          {user?.userName !== m.userName && (
+          <button className={styles.removeBtn} onClick={() => handleRemove(m)}>
+            Remove
+          </button>
+)}
+        </div>
+      ))}
 
         <div className={styles.divider} />
 

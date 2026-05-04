@@ -3,7 +3,8 @@ const BASE_URL = '';
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  withAuth = false
+  withAuth = false,
+  retry = true  // ← para evitar loop infinito
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -16,11 +17,26 @@ async function request<T>(
   }
 
   const userId = localStorage.getItem('userId');
-  if (userId) {
-    headers['X-User-Id'] = userId;
-  }
+  if (userId) headers['X-User-Id'] = userId;
+
+  const userName = localStorage.getItem('userName');
+  if (userName) headers['X-User-Name'] = userName;
 
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+
+  // ← interceptar 401 y refrescar token
+  if (res.status === 401 && withAuth && retry) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      // reintentar el request original con el nuevo token
+      return request<T>(path, options, withAuth, false);
+    } else {
+      // refresh falló → logout
+      clearSession();
+      window.location.href = '/login';
+      throw new Error('Sesión expirada');
+    }
+  }
 
   if (res.status === 204) return undefined as T;
 
@@ -30,6 +46,35 @@ async function request<T>(
   }
 
   return res.json();
+}
+
+async function tryRefreshToken(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/auth/refresh-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('refreshToken', data.refreshToken);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('userName');
 }
 
 export const apiClient = {

@@ -27,6 +27,10 @@ export function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string>('overview');
 
+  // Status dropdown
+  const [showStatusMenu, setShowStatusMenu]   = useState(false);
+  const [updatingStatus, setUpdatingStatus]   = useState(false);
+
   // Form nueva fase
   const [showPhaseForm, setShowPhaseForm] = useState(false);
   const [phaseName, setPhaseName]         = useState('');
@@ -34,7 +38,7 @@ export function ProjectDetailPage() {
   const [phaseEnd, setPhaseEnd]           = useState('');
   const [phaseLoading, setPhaseLoading]   = useState(false);
 
-  // Confirm modal (para eliminar fase desde topbar si se quiere)
+  // Confirm modal
   const [confirmModal, setConfirmModal] = useState<{
     title: string; message: string; onConfirm: () => void;
   } | null>(null);
@@ -59,6 +63,26 @@ export function ProjectDetailPage() {
   }, [id]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Cerrar el menú al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = () => setShowStatusMenu(false);
+    if (showStatusMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showStatusMenu]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setUpdatingStatus(true);
+    setShowStatusMenu(false);
+    try {
+      await projectService.update(Number(id), { status: newStatus as any });
+      loadData();
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const handleAddPhase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,10 +129,57 @@ export function ProjectDetailPage() {
         <div className={styles.topBarCenter}>
           <span className={styles.topBarName}>{project.name}</span>
           <span className={styles.topBarCode}>#{project.code}</span>
-          <span className={`${styles.topBarBadge} ${styles[`status_${statusColor(project.status)}`]}`}>
-            {project.status.replace(/_/g, ' ')}
-          </span>
+
+          {/* Status badge clickeable */}
+          <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <button
+              className={`${styles.topBarBadge} ${styles[`status_${statusColor(project.status)}`]}`}
+              onClick={() => setShowStatusMenu(v => !v)}
+              style={{ cursor: 'pointer' }}
+            >
+              {updatingStatus ? '...' : project.status.replace(/_/g, ' ')}
+            </button>
+
+            {showStatusMenu && (
+              <div style={{
+                position: 'absolute',
+                top: '110%',
+                left: 0,
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-lg)',
+                boxShadow: 'var(--shadow-lg)',
+                zIndex: 50,
+                minWidth: '160px',
+                overflow: 'hidden',
+              }}>
+                {['PLANNING','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => handleStatusChange(s)}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 16px',
+                      textAlign: 'left',
+                      fontSize: 'var(--font-size-xs)',
+                      fontWeight: 600,
+                      background: project.status === s ? 'var(--color-primary-subtle)' : 'transparent',
+                      color: project.status === s ? 'var(--color-primary)' : 'var(--color-text)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = project.status === s ? 'var(--color-primary-subtle)' : 'transparent')}
+                  >
+                    {s.replace(/_/g, ' ')}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
         <div className={styles.topBarRight}>
           <span className={styles.topBarMeta}>{tasks.length} tasks</span>
           <span className={styles.topBarMeta}>{tasks.filter(t => t.status === 'DONE').length} done</span>

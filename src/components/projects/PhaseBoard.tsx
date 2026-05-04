@@ -6,6 +6,7 @@ import type {
 import { taskService, columnService } from '../../api/projectService';
 import styles from './PhaseBoard.module.css';
 import { TaskModal } from './TaskModal';
+import { ConfirmModal } from '../shared/ConfirmModal';
 
 interface PhaseBoardProps {
   phase: Phase;
@@ -46,6 +47,12 @@ export function PhaseBoard({ phase, tasks, projectId, onTasksChange }: PhaseBoar
     const cols = await columnService.getByPhase(phase.phaseId);
     setColumns(cols);
   }, [phase.phaseId]);
+
+  const [confirmModal, setConfirmModal] = useState<{
+  title: string;
+  message: string;
+  onConfirm: () => void;
+} | null>(null);
 
   useEffect(() => { loadColumns(); }, [loadColumns]);
 
@@ -123,11 +130,17 @@ export function PhaseBoard({ phase, tasks, projectId, onTasksChange }: PhaseBoar
     loadColumns();
   };
 
-  const handleDeleteColumn = async (col: BoardColumn) => {
-    if (!confirm(`Delete column "${col.name}"?`)) return;
-    await columnService.delete(phase.phaseId, col.columnId);
-    loadColumns();
-  };
+  const handleDeleteColumn = (col: BoardColumn) => {
+  setConfirmModal({
+    title: `Eliminar columna "${col.name}"`,
+    message: 'Las tareas de esta columna no se eliminarán, solo la columna.',
+    onConfirm: async () => {
+      setConfirmModal(null);
+      await columnService.delete(phase.phaseId, col.columnId);
+      loadColumns();
+    },
+  });
+};
 
   // ── Render ────────────────────────────────────────
   const getColTasks = (col: BoardColumn) =>
@@ -364,6 +377,16 @@ export function PhaseBoard({ phase, tasks, projectId, onTasksChange }: PhaseBoar
         onDelete={() => { onTasksChange(); setSelectedTask(null); }}
       />
     )}
+    {confirmModal && (
+    <ConfirmModal
+      title={confirmModal.title}
+      message={confirmModal.message}
+      confirmLabel="Eliminar"
+      danger
+      onConfirm={confirmModal.onConfirm}
+      onCancel={() => setConfirmModal(null)}
+    />
+  )}
 
     </div>
   );

@@ -106,6 +106,7 @@ export interface ProjectMember {
   userId: string;
   userName: string;
   joinedAt: string;
+  role: string;
 }
 
 export interface AddMemberRequest {

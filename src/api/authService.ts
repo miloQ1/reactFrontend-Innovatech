@@ -19,6 +19,6 @@ export const authService = {
   },
   
   getUserByUsername(userName: string): Promise<User> {
-  return apiClient.get<User>(`/api/users/username/${userName}`);
+  return apiClient.get<User>(`/api/users/username/${userName}`, true);
 },
 };
