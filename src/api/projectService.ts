@@ -127,3 +127,58 @@ export const columnService = {
     return apiClient.delete<void>(`/api/phases/${phaseId}/columns/${columnId}`, true);
   },
 };
+
+// ── Resources ─────────────────────────────────────────
+export const professionalService = {
+  getAll(): Promise<any[]> {
+    return apiClient.get<any[]>('/api/professionals', true);
+  },
+  getById(id: number): Promise<any> {
+    return apiClient.get<any>(`/api/professionals/${id}`, true);
+  },
+  create(data: any): Promise<any> {
+    return apiClient.post<any>('/api/professionals', data, true);
+  },
+  update(id: number, data: any): Promise<any> {
+    return apiClient.put<any>(`/api/professionals/${id}`, data, true);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/professionals/${id}`, true);
+  },
+  getByStatus(status: string): Promise<any[]> {
+    return apiClient.get<any[]>(`/api/professionals/status/${status}`, true);
+  },
+};
+
+export const assignmentService = {
+  getAll(): Promise<any[]> {
+    return apiClient.get<any[]>('/api/assignments', true);
+  },
+  getByProject(projectId: number): Promise<any[]> {
+    return apiClient.get<any[]>(`/api/assignments/project/${projectId}`, true);
+  },
+  getByResource(resourceId: number): Promise<any[]> {
+    return apiClient.get<any[]>(`/api/assignments/resource/${resourceId}`, true);
+  },
+  create(data: any): Promise<any> {
+    return apiClient.post<any>('/api/assignments', data, true);
+  },
+  update(id: number, data: any): Promise<any> {
+    return apiClient.put<any>(`/api/assignments/${id}`, data, true);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/assignments/${id}`, true);
+  },
+};
+
+export const skillService = {
+  getAll(): Promise<any[]> {
+    return apiClient.get<any[]>('/api/skills', true);
+  },
+  create(data: any): Promise<any> {
+    return apiClient.post<any>('/api/skills', data, true);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/skills/${id}`, true);
+  },
+};

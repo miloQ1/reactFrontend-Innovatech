@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Task, TaskPriority, TaskStatus, UpdateTaskRequest } from '../../types/projects';
+import type { Task, TaskPriority, TaskStatus } from '../../types/projects';
 import { taskService } from '../../api/projectService';
 import styles from './TaskModal.module.css';
 

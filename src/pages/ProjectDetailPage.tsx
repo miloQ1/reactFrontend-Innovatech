@@ -65,25 +65,22 @@ export function ProjectDetailPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Cerrar el menú al hacer click afuera
-  useEffect(() => {
-    const handleClickOutside = () => setShowStatusMenu(false);
-    if (showStatusMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showStatusMenu]);
+
 
   const handleStatusChange = async (newStatus: string) => {
+  console.log('=== cambiando status a:', newStatus);
   setUpdatingStatus(true);
   setShowStatusMenu(false);
   try {
-    await apiClient.patch(`/api/projects/${id}/status`, { status: newStatus }, true);
+    const res = await apiClient.patch(`/api/projects/${id}/status`, { status: newStatus }, true);
+    console.log('=== respuesta:', res);
     loadData();
+  } catch(e) {
+    console.log('=== error:', e);
   } finally {
     setUpdatingStatus(false);
   }
-};
+}
 
   const handleAddPhase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,41 +139,52 @@ export function ProjectDetailPage() {
             </button>
 
             {showStatusMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '110%',
-                left: 0,
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: 'var(--shadow-lg)',
-                zIndex: 50,
-                minWidth: '160px',
-                overflow: 'hidden',
-              }}>
-                {['PLANNING','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '8px 16px',
-                      textAlign: 'left',
-                      fontSize: 'var(--font-size-xs)',
-                      fontWeight: 600,
-                      background: project.status === s ? 'var(--color-primary-subtle)' : 'transparent',
-                      color: project.status === s ? 'var(--color-primary)' : 'var(--color-text)',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = project.status === s ? 'var(--color-primary-subtle)' : 'transparent')}
-                  >
-                    {s.replace(/_/g, ' ')}
-                  </button>
-                ))}
-              </div>
+              <>
+                {/* overlay para cerrar al hacer click afuera */}
+                <div
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 49,
+                  }}
+                  onClick={() => setShowStatusMenu(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  top: '110%',
+                  left: 0,
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 50,
+                  minWidth: '160px',
+                  overflow: 'hidden',
+                }}>
+                  {['PLANNING','IN_PROGRESS','ON_HOLD','COMPLETED','CANCELLED'].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(s)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '8px 16px',
+                        textAlign: 'left',
+                        fontSize: 'var(--font-size-xs)',
+                        fontWeight: 600,
+                        background: project.status === s ? 'var(--color-primary-subtle)' : 'transparent',
+                        color: project.status === s ? 'var(--color-primary)' : 'var(--color-text)',
+                        border: 'none',
+                        cursor: 'pointer',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = project.status === s ? 'var(--color-primary-subtle)' : 'transparent')}
+                    >
+                      {s.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

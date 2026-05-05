@@ -39,6 +39,12 @@ export function Sidebar() {
         Dashboard
       </NavLink>
 
+      {/* Recursos */}
+      <NavLink to="/resources" className={getLinkClass}>
+      <span className={styles.navIcon}>👥</span>
+      Recursos
+    </NavLink>
+
       {/* Proyectos */}
       <span className={styles.sectionLabel}>Proyectos</span>
       
@@ -69,6 +75,7 @@ export function Sidebar() {
       </NavLink>
 
       ))}
+      
 
   
     </aside>

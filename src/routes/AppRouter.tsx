@@ -11,6 +11,7 @@ import { ClientDetailPage } from '../pages/ClientDetailPage';
 import { CreateProjectPage } from '../pages/CreateProjectPage';
 import { ProjectDetailPage } from '../pages/ProjectDetailPage';
 import { MyProjectsPage} from  '../pages/MyProjectsPage';
+import { ResourcesPage } from '../pages/ResourcesPage';
 
 
 export function AppRouter() {
@@ -42,6 +43,10 @@ export function AppRouter() {
           <Route path="/clients/:clientId/projects/create" element={<CreateProjectPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
           <Route path="/projects" element={<MyProjectsPage />} />
+
+          {/* Resources */}
+          <Route path="/resources" element={<ResourcesPage />} />
+
 
         </Route>
 

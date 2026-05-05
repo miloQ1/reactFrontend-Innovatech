@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type {
-  Phase, Task, TaskStatus, TaskPriority,
+  Phase, Task, TaskStatus,
   BoardColumn
 } from '../../types/projects';
 import { taskService, columnService } from '../../api/projectService';

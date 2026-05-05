@@ -6,7 +6,7 @@ import { EmptyState } from '../components/shared/EmptyState';
 import type {
   Project, Client, CreateProjectRequest,
   CreateClientRequest, ProjectStatus, ClientStatus
-} from '../types/project';
+} from '../types/projects';
 import styles from './MyProjectsPage.module.css';
 
 const STATUS_OPTIONS: ProjectStatus[] = [
