@@ -253,6 +253,40 @@
 .saveBtn:hover { background: var(--color-primary-hover); }
 .saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* ── Asignado a ── */
+.assignedPro {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.assignedAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+}
+
+.assignedName {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  display: block;
+}
+
+.assignedRole {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: block;
+}
+
 .cancelBtn {
   padding: var(--space-2) var(--space-4);
   background: transparent;

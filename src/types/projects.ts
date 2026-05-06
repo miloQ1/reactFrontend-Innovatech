@@ -57,6 +57,7 @@ export interface UpdateTaskRequest {
   title?: string;
   description?: string;
   priority?: TaskPriority | null;
+  assignedResourceId?: number;
   status?: TaskStatus;
   dueDate?: string;
 }

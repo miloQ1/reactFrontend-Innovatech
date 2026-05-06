@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { Task, TaskPriority, TaskStatus } from '../../types/projects';
-import { taskService } from '../../api/projectService';
+import { taskService, professionalService } from '../../api/projectService';
 import styles from './TaskModal.module.css';
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -15,14 +15,18 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps) {
-  const [isEditing, setIsEditing]   = useState(false);
-  const [title, setTitle]           = useState(task.title);
-  const [description, setDescription] = useState(task.description ?? '');
-  const [priority, setPriority]     = useState<TaskPriority | null>(task.priority);
-  const [status, setStatus]         = useState<TaskStatus>(task.status);
-  const [dueDate, setDueDate]       = useState(task.dueDate ?? '');
-  const [saving, setSaving]         = useState(false);
-  const [deleting, setDeleting]     = useState(false);
+  const [isEditing, setIsEditing]       = useState(false);
+  const [title, setTitle]               = useState(task.title);
+  const [description, setDescription]   = useState(task.description ?? '');
+  const [priority, setPriority]         = useState<TaskPriority | null>(task.priority);
+  const [status, setStatus]             = useState<TaskStatus>(task.status);
+  const [dueDate, setDueDate]           = useState(task.dueDate ?? '');
+  const [assignedResourceId, setAssignedResourceId] = useState<number | null>(
+    task.assignedResourceId ?? null
+  );
+  const [professionals, setProfessionals] = useState<any[]>([]);
+  const [saving, setSaving]             = useState(false);
+  const [deleting, setDeleting]         = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
@@ -33,6 +37,12 @@ export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps)
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
+  useEffect(() => {
+    professionalService.getAll()
+      .then(setProfessionals)
+      .catch(() => setProfessionals([]));
+  }, []);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -42,6 +52,7 @@ export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps)
         priority: priority ?? undefined,
         status,
         dueDate: dueDate || undefined,
+        assignedResourceId: assignedResourceId ?? undefined,
       });
       setIsEditing(false);
       onUpdate();
@@ -60,6 +71,8 @@ export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps)
       setDeleting(false);
     }
   };
+
+  const assignedPro = professionals.find(p => p.resourceId === assignedResourceId);
 
   return (
     <div className={styles.overlay} onClick={onClose}>
@@ -116,7 +129,7 @@ export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps)
         {/* Body */}
         <div className={styles.body}>
 
-          {/* Campos de estado */}
+          {/* Campos */}
           <div className={styles.fields}>
             <div className={styles.field}>
               <span className={styles.fieldLabel}>Status</span>
@@ -174,6 +187,44 @@ export function TaskModal({ task, onClose, onUpdate, onDelete }: TaskModalProps)
                 />
               ) : (
                 <span className={styles.fieldValue}>{dueDate || '—'}</span>
+              )}
+            </div>
+
+            {/* ── Asignado a ── */}
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Asignado a</span>
+              {isEditing ? (
+                <select
+                  className={styles.fieldSelect}
+                  value={assignedResourceId ?? ''}
+                  onChange={e => setAssignedResourceId(e.target.value ? Number(e.target.value) : null)}
+                >
+                  <option value="">— Sin asignar —</option>
+                  {professionals
+                    .filter(p => p.status === 'ACTIVE')
+                    .map(p => (
+                      <option key={p.resourceId} value={p.resourceId}>
+                        {p.firstName} {p.lastName} — {p.roleName ?? 'Sin rol'}
+                      </option>
+                    ))
+                  }
+                </select>
+              ) : assignedPro ? (
+                <div className={styles.assignedPro}>
+                  <div className={styles.assignedAvatar}>
+                    {assignedPro.firstName?.charAt(0)}{assignedPro.lastName?.charAt(0)}
+                  </div>
+                  <div>
+                    <span className={styles.assignedName}>
+                      {assignedPro.firstName} {assignedPro.lastName}
+                    </span>
+                    {assignedPro.roleName && (
+                      <span className={styles.assignedRole}>{assignedPro.roleName}</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <span className={styles.fieldEmpty}>Sin asignar</span>
               )}
             </div>
           </div>
