@@ -231,6 +231,7 @@ export function PhasesTab({ phases, tasks, projectId, onReload, onTabChange }: P
       {selectedTask && (
         <TaskModal
           task={selectedTask}
+          projectId={projectId}
           onClose={() => setSelectedTask(null)}
           onUpdate={() => { onReload(); setSelectedTask(null); }}
           onDelete={() => { onReload(); setSelectedTask(null); }}

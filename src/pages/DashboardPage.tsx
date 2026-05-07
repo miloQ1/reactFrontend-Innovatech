@@ -22,11 +22,12 @@ export function DashboardPage() {
     }).finally(() => setLoading(false));
   }, []);
 
-  const inProgress = projects.filter(p => p.status === 'IN_PROGRESS').length;
-  const completed  = projects.filter(p => p.status === 'COMPLETED').length;
+  const activeClients = clients.filter(c => c.status === 'ACTIVE');
+  const inProgress    = projects.filter(p => p.status === 'IN_PROGRESS').length;
+  const completed     = projects.filter(p => p.status === 'COMPLETED').length;
 
   const noClients  = !loading && clients.length === 0;
-  const noProjects = !loading && clients.length > 0 && projects.length === 0;
+  const noProjects = !loading && activeClients.length > 0 && projects.length === 0;
   const hasData    = !loading && projects.length > 0;
 
   return (
@@ -40,7 +41,7 @@ export function DashboardPage() {
           : 'Comencemos a configurar tu espacio de trabajo.'}
       </p>
 
-      {/* ── Estado vacío: sin clientes ── */}
+      {/* ── Sin clientes ── */}
       {noClients && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>🏢</div>
@@ -65,42 +66,28 @@ export function DashboardPage() {
               <span>Agregar fases y tareas</span>
             </div>
           </div>
-          <button
-            className={styles.emptyBtn}
-            onClick={() => navigate('/clients/create')}
-          >
+          <button className={styles.emptyBtn} onClick={() => navigate('/clients/create')}>
             ＋ Crear primer cliente
           </button>
         </div>
       )}
 
-      {/* ── Estado vacío: tiene clientes pero sin proyectos ── */}
+      {/* ── Sin proyectos ── */}
       {noProjects && (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>📋</div>
-          <h2 className={styles.emptyTitle}>Ahora crea tu primer proyecto</h2>
+          <h2 className={styles.emptyTitle}>Crea tu primer proyecto</h2>
           <p className={styles.emptyDesc}>
-            Ya tienes {clients.length} cliente{clients.length > 1 ? 's' : ''} registrado{clients.length > 1 ? 's' : ''}.
-            El siguiente paso es crear un proyecto y comenzar a organizar tu trabajo.
+            Tienes {activeClients.length} cliente{activeClients.length !== 1 ? 's' : ''} activo{activeClients.length !== 1 ? 's' : ''}.
+            Entra a un cliente y crea el primer proyecto desde ahí.
           </p>
-          <div className={styles.emptyActions}>
-            <button
-              className={styles.emptyBtn}
-              onClick={() => navigate('/projects/create')}
-            >
-              ＋ Crear primer proyecto
-            </button>
-            <button
-              className={styles.emptyBtnSecondary}
-              onClick={() => navigate('/clients')}
-            >
-              Ver clientes
-            </button>
-          </div>
+          <button className={styles.emptyBtn} onClick={() => navigate('/clients')}>
+            Ver clientes →
+          </button>
         </div>
       )}
 
-      {/* ── Stats (solo si hay proyectos) ── */}
+      {/* ── Stats ── */}
       {hasData && (
         <>
           <div className={styles.statsGrid}>
@@ -124,10 +111,10 @@ export function DashboardPage() {
           <h2 className={styles.sectionTitle}>⚡ Acciones rápidas</h2>
           <div className={styles.quickActions}>
             <button className={styles.actionBtn} onClick={() => navigate('/projects')}>
-              📁 Ver proyectos
+              Ver proyectos
             </button>
-            <button className={styles.actionBtn} onClick={() => navigate('/projects/create')}>
-              ➕ Nuevo proyecto
+            <button className={styles.actionBtn} onClick={() => navigate('/clients')}>
+              Ver clientes
             </button>
           </div>
         </>

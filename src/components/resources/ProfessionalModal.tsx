@@ -91,12 +91,14 @@ export function ProfessionalModal({ professional, onClose, onSave }: Professiona
           </div>
 
           <div className={styles.row}>
+            {professional?.employeeCode && (
             <div className={styles.field}>
               <label className={styles.label}>Código empleado</label>
-              <input className={styles.input} name="employeeCode"
-                value={form.employeeCode} onChange={handleChange}
-                placeholder="EMP-001" />
+              <span className={styles.employeeCode}>
+                {professional.employeeCode}
+              </span>
             </div>
+          )}
             <div className={styles.field}>
               <label className={styles.label}>Rol</label>
               <input className={styles.input} name="roleName"

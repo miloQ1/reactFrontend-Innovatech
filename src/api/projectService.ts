@@ -181,4 +181,27 @@ export const skillService = {
   delete(id: number): Promise<void> {
     return apiClient.delete<void>(`/api/skills/${id}`, true);
   },
+
+};
+
+// ── Collaboration ─────────────────────────────────────
+export const threadService = {
+  getByProject(projectId: number): Promise<any[]> {
+    return apiClient.get<any[]>(`/api/threads/project/${projectId}`, true);
+  },
+  create(data: any): Promise<any> {
+    return apiClient.post<any>('/api/threads', data, true);
+  },
+};
+
+export const commentService = {
+  getByThread(threadId: number): Promise<any[]> {
+    return apiClient.get<any[]>(`/api/comments/thread/${threadId}`, true);
+  },
+  create(data: any): Promise<any> {
+    return apiClient.post<any>('/api/comments', data, true);
+  },
+  delete(id: number): Promise<void> {
+    return apiClient.delete<void>(`/api/comments/${id}`, true);
+  },
 };

@@ -13,6 +13,8 @@
   overflow-y: auto;
 }
 
+
+
 .sectionLabel {
   padding: var(--space-2) var(--space-6);
   font-size: var(--font-size-xs);
@@ -22,6 +24,19 @@
   color: var(--color-text-muted);
   margin-top: var(--space-4);
 }
+
+.sectionLabelLink {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  transition: color var(--transition-fast);
+  text-decoration: none;
+}
+.sectionLabelLink:hover { color: var(--color-primary); }
 
 .sectionLabel:first-child {
   margin-top: 0;

@@ -372,6 +372,7 @@ export function PhaseBoard({ phase, tasks, projectId, onTasksChange }: PhaseBoar
     ´{selectedTask && (
       <TaskModal
         task={selectedTask}
+        projectId={projectId}
         onClose={() => setSelectedTask(null)}
         onUpdate={() => { onTasksChange(); setSelectedTask(null); }}
         onDelete={() => { onTasksChange(); setSelectedTask(null); }}

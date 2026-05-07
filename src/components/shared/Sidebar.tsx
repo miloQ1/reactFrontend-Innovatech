@@ -8,25 +8,23 @@ export function Sidebar() {
   const getLinkClass = ({ isActive }: { isActive: boolean }) =>
     `${styles.navLink} ${isActive ? styles.navLinkActive : ''}`;
 
-
-
-  // trae todos los proyectos en una lista
   const [Projects, setProjects] = useState<Project[]>([]);
+  const [Clients, setClients]   = useState<Client[]>([]);
 
   useEffect(() => {
     projectService.getAll()
-    .then(setProjects)
-    .catch(() => setProjects([]));
-  }, []); //el efecto se activa una vez
-
-  // trae todos los clientes en una lista
-  const [Clients, setClients] = useState<Client[]>([]);
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, []);
 
   useEffect(() => {
     clientService.getAll()
-    .then(setClients)
-    .catch(() => setClients([]));
+      .then(setClients)
+      .catch(() => setClients([]));
   }, []);
+
+  // Solo clientes activos
+  const activeClients = Clients.filter(c => c.status === 'ACTIVE');
 
   return (
     <aside className={styles.sidebar}>
@@ -39,45 +37,43 @@ export function Sidebar() {
         Dashboard
       </NavLink>
 
-      {/* Recursos */}
       <NavLink to="/resources" className={getLinkClass}>
-      <span className={styles.navIcon}>👥</span>
-      Recursos
-    </NavLink>
+        <span className={styles.navIcon}>👥</span>
+        Recursos
+      </NavLink>
 
       {/* Proyectos */}
-      <span className={styles.sectionLabel}>Proyectos</span>
-      
-      
-      {Projects.map((project)=> (
+      <NavLink to="/projects" className={styles.sectionLabelLink}>
+  Proyectos
+</NavLink>
+
+{Projects.map(project => (
+  <NavLink
+    key={project.projectId}
+    to={`/projects/${project.projectId}`}
+    className={getLinkClass}
+  >
+    <span className={styles.navIcon}>📋</span>
+    {project.name}
+  </NavLink>
+))}
+
+      {/* Clientes — solo activos, label clickeable */}
+      <NavLink to="/clients" className={styles.sectionLabelLink}>
+        Clientes
+      </NavLink>
+
+      {activeClients.map(client => (
         <NavLink
-        key={project.projectId} 
-        to={`/projects/${project.projectId}`} 
-        className={getLinkClass}
+          key={client.clientId}
+          to={`/clients/${client.clientId}`}
+          className={getLinkClass}
         >
-        
-        <span className={styles.navIcon}>📋</span>
-        {project.name}
-      </NavLink>
+          <span className={styles.navIcon}>🏢</span>
+          {client.name}
+        </NavLink>
       ))}
-      
-      {/* Clientes */}
-      <span className={styles.sectionLabel}>Clientes</span>
 
-      {Clients.map((client) => (
-      <NavLink 
-      key={client.clientId}
-      to={`/clients/${client.clientId}`} 
-      className={getLinkClass}
-      >
-        <span className={styles.navIcon}>🏢</span>
-        {client.name}
-      </NavLink>
-
-      ))}
-      
-
-  
     </aside>
   );
 }
